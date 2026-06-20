@@ -1,9 +1,13 @@
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { db } from "@/lib/db/store";
+
+export type UserRole = "resident" | "volunteer";
 
 export interface SessionUser {
     email: string;
     name: string;
+    role: UserRole;
     walletAddress?: string;
 }
 
@@ -21,7 +25,7 @@ export const sessionOptions: SessionOptions = {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 7,
     },
 };
 
@@ -30,31 +34,39 @@ export async function getSession() {
     return getIronSession<SessionData>(cookieStore, sessionOptions);
 }
 
-// In-memory user store. Replace with Supabase/Postgres in production.
-interface StoredUser {
-    email: string;
-    passwordHash: string;
-    name: string;
-    walletAddress?: string;
-    createdAt: number;
+// Pre-seed two demo users on first run.
+seedDemoAccounts();
+function seedDemoAccounts() {
+    if (!db.findUser("resident@monsoon.local")) {
+        db.createUser({
+            email: "resident@monsoon.local",
+            passwordHash: hashPassword("demo1234"),
+            name: "Demo Resident",
+            role: "resident",
+            createdAt: Date.now(),
+        });
+    }
+    if (!db.findUser("volunteer@monsoon.local")) {
+        db.createUser({
+            email: "volunteer@monsoon.local",
+            passwordHash: hashPassword("demo1234"),
+            name: "Demo Volunteer",
+            role: "volunteer",
+            createdAt: Date.now(),
+        });
+    }
+    // Backfill: legacy demo@monsoon.local from earlier sessions
+    if (!db.findUser("demo@monsoon.local")) {
+        db.createUser({
+            email: "demo@monsoon.local",
+            passwordHash: hashPassword("demo1234"),
+            name: "Demo Resident",
+            role: "resident",
+            createdAt: Date.now(),
+        });
+    }
 }
 
-const _users = new Map<string, StoredUser>();
-
-// Pre-seed a demo user
-seedDemoUser();
-function seedDemoUser() {
-    if (_users.has("demo@monsoon.local")) return;
-    _users.set("demo@monsoon.local", {
-        email: "demo@monsoon.local",
-        passwordHash: hashPassword("demo1234"),
-        name: "Demo Resident",
-        createdAt: Date.now(),
-    });
-}
-
-// Simple password hashing — for hackathon demo only.
-// In production use bcrypt/argon2.
 function hashPassword(password: string): string {
     let h = 5381;
     for (let i = 0; i < password.length; i++) {
@@ -64,25 +76,81 @@ function hashPassword(password: string): string {
 }
 
 export function userExists(email: string): boolean {
-    return _users.has(email.toLowerCase());
+    return Boolean(db.findUser(email));
 }
 
-export function createUser(email: string, password: string, name: string): SessionUser {
-    const key = email.toLowerCase();
-    if (_users.has(key)) throw new Error("User already exists");
-    if (password.length < 6) throw new Error("Password must be at least 6 characters");
-    _users.set(key, { email: key, passwordHash: hashPassword(password), name, createdAt: Date.now() });
-    return { email: key, name };
+export interface CreateUserInput {
+    email: string;
+    password: string;
+    name: string;
+    role: UserRole;
+    /** Required for volunteer role: connected wallet address */
+    walletAddress?: string;
+    /** Volunteer-only fields */
+    volunteerFields?: {
+        displayName: string;
+        phone?: string;
+        serviceAreas: string[];
+    };
+}
+
+export function createUser(input: CreateUserInput): SessionUser {
+    if (db.findUser(input.email)) throw new Error("User already exists");
+    if (input.password.length < 6) throw new Error("Password must be at least 6 characters");
+
+    if (input.role === "volunteer") {
+        if (!input.walletAddress || !/^0x[a-fA-F0-9]{40}$/u.test(input.walletAddress)) {
+            throw new Error("Wallet address required to register as a volunteer");
+        }
+        if (!input.volunteerFields?.displayName || input.volunteerFields.serviceAreas.length === 0) {
+            throw new Error("Display name and at least one service area required");
+        }
+        if (db.findVolunteerByWallet(input.walletAddress)) {
+            throw new Error("This wallet is already registered as a volunteer");
+        }
+    }
+
+    db.createUser({
+        email: input.email.toLowerCase(),
+        passwordHash: hashPassword(input.password),
+        name: input.name,
+        role: input.role,
+        walletAddress: input.walletAddress?.toLowerCase(),
+        createdAt: Date.now(),
+    });
+
+    if (input.role === "volunteer" && input.walletAddress && input.volunteerFields) {
+        db.createVolunteer({
+            walletAddress: input.walletAddress,
+            userEmail: input.email,
+            displayName: input.volunteerFields.displayName,
+            phone: input.volunteerFields.phone,
+            serviceAreas: input.volunteerFields.serviceAreas,
+            completedTasks: 0,
+            createdAt: Date.now(),
+        });
+    }
+
+    return {
+        email: input.email.toLowerCase(),
+        name: input.name,
+        role: input.role,
+        walletAddress: input.walletAddress?.toLowerCase(),
+    };
 }
 
 export function verifyUser(email: string, password: string): SessionUser | null {
-    const u = _users.get(email.toLowerCase());
+    const u = db.findUser(email);
     if (!u) return null;
     if (u.passwordHash !== hashPassword(password)) return null;
-    return { email: u.email, name: u.name, walletAddress: u.walletAddress };
+    return {
+        email: u.email,
+        name: u.name,
+        role: u.role ?? "resident",
+        walletAddress: u.walletAddress,
+    };
 }
 
 export function attachWallet(email: string, walletAddress: string): void {
-    const u = _users.get(email.toLowerCase());
-    if (u) u.walletAddress = walletAddress;
+    db.attachWallet(email, walletAddress);
 }

@@ -2,11 +2,24 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession, createUser, userExists } from "@/lib/auth/session";
 
-const Body = z.object({
-    email: z.string().email(),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    name: z.string().min(1, "Name required"),
-});
+const Body = z.discriminatedUnion("role", [
+    z.object({
+        role: z.literal("resident"),
+        email: z.string().email(),
+        password: z.string().min(6, "Password must be at least 6 characters"),
+        name: z.string().min(1, "Name required"),
+    }),
+    z.object({
+        role: z.literal("volunteer"),
+        email: z.string().email(),
+        password: z.string().min(6, "Password must be at least 6 characters"),
+        name: z.string().min(1, "Name required"),
+        walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/u, "Connect a valid wallet"),
+        displayName: z.string().min(1, "Display name required"),
+        phone: z.string().optional(),
+        serviceAreas: z.array(z.string()).min(1, "Pick at least one service area"),
+    }),
+]);
 
 export async function POST(req: Request): Promise<Response> {
     const json = await req.json().catch(() => null);
@@ -18,7 +31,27 @@ export async function POST(req: Request): Promise<Response> {
         return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
     }
     try {
-        const user = createUser(parsed.data.email, parsed.data.password, parsed.data.name);
+        const data = parsed.data;
+        const user =
+            data.role === "volunteer"
+                ? createUser({
+                      email: data.email,
+                      password: data.password,
+                      name: data.name,
+                      role: "volunteer",
+                      walletAddress: data.walletAddress,
+                      volunteerFields: {
+                          displayName: data.displayName,
+                          phone: data.phone,
+                          serviceAreas: data.serviceAreas,
+                      },
+                  })
+                : createUser({
+                      email: data.email,
+                      password: data.password,
+                      name: data.name,
+                      role: "resident",
+                  });
         const session = await getSession();
         session.user = user;
         await session.save();

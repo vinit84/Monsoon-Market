@@ -53,6 +53,7 @@ const _requests: SimRequest[] = [];
 const _events: SimEvent[] = [];
 const _listeners = new Set<Listener>();
 const _reputation: Record<string, number> = {};
+const _earnings: Record<string, number> = {};
 
 function fakeTxHash(): string {
     return `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
@@ -81,6 +82,10 @@ export function getEvents(): SimEvent[] {
 
 export function getReputation(): Record<string, number> {
     return { ..._reputation };
+}
+
+export function getEarnings(): Record<string, number> {
+    return { ..._earnings };
 }
 
 // --- Agent definitions ---
@@ -118,7 +123,7 @@ export function simulateRequest(req: {
         ...req,
         ipfsUri,
         state: "open",
-        deadline: now + 10_000,
+        deadline: now + 20_000,
         bids: [],
         createdAt: now,
     };
@@ -156,7 +161,6 @@ async function scheduleAgentFlow(request: SimRequest) {
         explorerUrl: `#tx-${_blockNumber}`,
         details: "Checked inventory: medicine available at Andheri Pharma Co-op",
     });
-
     // 2. Route Agent quotes (1.5s delay)
     await delay(500);
     emit({
@@ -218,8 +222,8 @@ async function scheduleAgentFlow(request: SimRequest) {
         details: `Price: ${bidB.priceMon} MON · ETA: ${bidB.etaSeconds}s · Stake: 0.01 MON`,
     });
 
-    // 5. Wait for auction deadline (5s more to total ~10s)
-    await delay(5000);
+    // 5. Wait for auction deadline (give humans time to bid via MetaMask)
+    await delay(15000);
 
     // Close auction — lowest score wins
     const sorted = [...request.bids].sort((a, b) => a.score - b.score);
@@ -256,6 +260,9 @@ async function scheduleAgentFlow(request: SimRequest) {
     request.verdict = "accepted";
     request.state = "fulfilled";
     _reputation[winner.agentAddress] = (_reputation[winner.agentAddress] ?? 0) + 1;
+    const stakeAmount = 0.01;
+    const payout = winner.priceMon + stakeAmount;
+    _earnings[winner.agentAddress] = (_earnings[winner.agentAddress] ?? 0) + payout;
     emit({
         txHash: fakeTxHash(),
         blockNumber: _blockNumber,
@@ -264,7 +271,7 @@ async function scheduleAgentFlow(request: SimRequest) {
         actor: AGENTS.verifier.address,
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
-        details: `Verdict: ACCEPTED (Nugen vision) · Bounty ${winner.priceMon} MON + stake released to ${winner.agentLabel} · Surplus ${(request.bountyMon - winner.priceMon).toFixed(4)} MON refunded`,
+        details: `Verdict: ACCEPTED (Nugen vision) · ${winner.agentLabel} earned ${payout.toFixed(4)} MON (price ${winner.priceMon} + stake ${stakeAmount}) · Surplus ${(request.bountyMon - winner.priceMon).toFixed(4)} MON refunded`,
     });
 
     // 8. ERC-8004 reputation write (0.5s)
@@ -283,4 +290,52 @@ async function scheduleAgentFlow(request: SimRequest) {
 
 function delay(ms: number): Promise<void> {
     return new Promise((r) => setTimeout(r, ms));
+}
+
+
+/**
+ * Inject a human-submitted bid into an open simulation request.
+ * Called from /api/volunteer/bid-sim when a registered volunteer places a bid via the dashboard.
+ */
+export function addHumanBid(input: {
+    requestId: number;
+    priceMon: number;
+    etaSeconds: number;
+    walletAddress: string;
+    displayName: string;
+}): { ok: true; bid: SimBid } | { ok: false; error: string } {
+    const r = _requests.find((x) => x.id === input.requestId);
+    if (!r) return { ok: false, error: "Request not found" };
+    if (r.state !== "open") return { ok: false, error: "Auction is closed" };
+    if (input.priceMon > r.bountyMon) return { ok: false, error: "Price exceeds bounty" };
+    if (input.priceMon <= 0) return { ok: false, error: "Price must be positive" };
+    // Prevent duplicate bids from the same wallet on the same request
+    if (r.bids.some((b) => b.agentAddress.toLowerCase() === input.walletAddress.toLowerCase())) {
+        return { ok: false, error: "You've already bid on this request" };
+    }
+
+    const completedTasks = _reputation[input.walletAddress.toLowerCase()] ?? 0;
+    const bid: SimBid = {
+        agentLabel: `🧑 ${input.displayName}`,
+        agentAddress: input.walletAddress.toLowerCase(),
+        priceMon: input.priceMon,
+        etaSeconds: input.etaSeconds,
+        completedTasks,
+        score: input.priceMon / (1 + completedTasks),
+        txHash: fakeTxHash(),
+    };
+    r.bids.push(bid);
+
+    emit({
+        txHash: bid.txHash,
+        blockNumber: _blockNumber,
+        eventName: "BidSubmitted",
+        actionLabel: "submitBid (human)",
+        actor: bid.agentAddress,
+        requestId: String(r.id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `${input.displayName} bid ${input.priceMon} MON · ETA ${input.etaSeconds}s · stake 0.01 MON`,
+    });
+
+    return { ok: true, bid };
 }

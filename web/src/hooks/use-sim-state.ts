@@ -32,11 +32,12 @@ export interface SimRequest {
 export interface SimState {
     requests: SimRequest[];
     reputation: Record<string, number>;
+    earnings: Record<string, number>;
 }
 
 /** Polls /api/sim/state every 1s for live UI updates. */
 export function useSimState(): SimState {
-    const [state, setState] = useState<SimState>({ requests: [], reputation: {} });
+    const [state, setState] = useState<SimState>({ requests: [], reputation: {}, earnings: {} });
 
     useEffect(() => {
         let cancelled = false;

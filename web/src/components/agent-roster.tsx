@@ -15,10 +15,20 @@ const AGENTS: { label: string; address: string; role: string }[] = [
 ];
 
 export function AgentRoster() {
-    const { reputation } = useSimState();
+    const { reputation, earnings } = useSimState();
+    const totalPaidOut = Object.values(earnings).reduce((a, b) => a + b, 0);
+
     return (
         <Card>
-            <CardHeader title="Agent Roster" description="Six autonomous agents · server-held wallets" />
+            <CardHeader
+                title="Agent Roster"
+                description="Six autonomous agents · server-held wallets"
+                action={
+                    <Badge variant="brass">
+                        {totalPaidOut.toFixed(4)} MON PAID OUT
+                    </Badge>
+                }
+            />
             <div className="overflow-x-auto">
                 <table className="sk-table">
                     <thead>
@@ -26,27 +36,41 @@ export function AgentRoster() {
                             <th>Agent</th>
                             <th>Role</th>
                             <th>Address</th>
-                            <th>Reputation</th>
+                            <th className="text-right">Tasks</th>
+                            <th className="text-right">Earned (MON)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {AGENTS.map((a) => (
-                            <tr key={a.address}>
-                                <td>
-                                    <div className="flex items-center gap-2">
-                                        <span className="sk-led sk-led-green" style={{ width: 8, height: 8 }} />
-                                        <span className="font-semibold">{a.label}</span>
-                                    </div>
-                                </td>
-                                <td className="text-[color:var(--color-ink-muted)] text-[12px]">{a.role}</td>
-                                <td>
-                                    <span className="font-mono text-[11px]">{shortAddr(a.address)}</span>
-                                </td>
-                                <td>
-                                    <Badge variant="brass">{reputation[a.address] ?? 0} tasks</Badge>
-                                </td>
-                            </tr>
-                        ))}
+                        {AGENTS.map((a) => {
+                            const earned = earnings[a.address.toLowerCase()] ?? earnings[a.address] ?? 0;
+                            const tasks = reputation[a.address.toLowerCase()] ?? reputation[a.address] ?? 0;
+                            return (
+                                <tr key={a.address}>
+                                    <td>
+                                        <div className="flex items-center gap-2">
+                                            <span className="sk-led sk-led-green" style={{ width: 8, height: 8 }} />
+                                            <span className="font-semibold">{a.label}</span>
+                                        </div>
+                                    </td>
+                                    <td className="text-[color:var(--color-ink-muted)] text-[12px]">{a.role}</td>
+                                    <td>
+                                        <span className="font-mono text-[11px]">{shortAddr(a.address)}</span>
+                                    </td>
+                                    <td className="text-right">
+                                        <Badge variant="brass">{tasks}</Badge>
+                                    </td>
+                                    <td className="text-right font-mono">
+                                        {earned > 0 ? (
+                                            <span className="text-[color:var(--color-brand-deep)] font-semibold">
+                                                +{earned.toFixed(4)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[color:var(--color-ink-faded)]">—</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

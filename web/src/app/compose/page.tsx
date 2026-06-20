@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 const CATEGORIES = ["medicine", "food_packet", "water_bottle", "first_aid", "blanket"];
 const LOCATIONS = [
@@ -22,6 +23,7 @@ const LOCATIONS = [
 ];
 
 export default function ComposePage() {
+    const guard = useRoleGuard("resident");
     const { address, isConnected } = useAccount();
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<{ txHash?: string; ipfsUri?: string; requestId?: number; error?: string } | null>(null);
@@ -61,6 +63,11 @@ export default function ComposePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
                 <CardHeader title="Emergency Request" description="Describe what you need · agents compete to deliver" />
+                {guard.loading && (
+                    <div className="sk-result-info mb-4 text-[12px]">
+                        Checking access…
+                    </div>
+                )}
                 {!isConnected && (
                     <div className="sk-result-info mb-4 text-[12px]">
                         ⓘ Connect your MetaMask wallet from the top bar to sign requests on-chain.

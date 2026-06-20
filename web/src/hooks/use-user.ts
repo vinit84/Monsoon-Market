@@ -1,31 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+export type UserRole = "resident" | "volunteer";
 
 export interface User {
     email: string;
     name: string;
+    role: UserRole;
     walletAddress?: string;
 }
 
+const USER_QUERY_KEY = ["user"] as const;
+
+async function fetchUser(): Promise<User | null> {
+    const res = await fetch("/api/auth/me", { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user: User | null };
+    return data.user;
+}
+
 export function useUser() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: user, isLoading } = useQuery({
+        queryKey: USER_QUERY_KEY,
+        queryFn: fetchUser,
+        staleTime: 5_000,
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: true,
+        refetchOnMount: true,
+    });
+    return { user: user ?? null, loading: isLoading };
+}
 
-    useEffect(() => {
-        async function load() {
-            try {
-                const res = await fetch("/api/auth/me", { cache: "no-store" });
-                if (res.ok) {
-                    const data = (await res.json()) as { user: User | null };
-                    setUser(data.user);
-                }
-            } finally {
-                setLoading(false);
-            }
-        }
-        load();
-    }, []);
-
-    return { user, loading, refresh: () => setUser(null) };
+/**
+ * Returns a function that invalidates the user query so all `useUser` consumers
+ * refetch immediately. Call this after login, register, or logout.
+ */
+export function useInvalidateUser() {
+    const qc = useQueryClient();
+    return () => {
+        qc.invalidateQueries({ queryKey: USER_QUERY_KEY });
+    };
 }
