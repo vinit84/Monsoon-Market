@@ -37,27 +37,34 @@ let _db: Db | null = null;
 
 function load(): Db {
     if (_db) return _db;
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(DB_PATH)) {
-        _db = { users: [], volunteers: [] };
-        save();
-        return _db;
-    }
     try {
-        _db = JSON.parse(fs.readFileSync(DB_PATH, "utf8")) as Db;
-        // Backfill missing fields for legacy records
-        _db.users = (_db.users ?? []).map((u) => ({ ...u, role: u.role ?? "resident" }));
-        _db.volunteers = _db.volunteers ?? [];
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     } catch {
-        _db = { users: [], volunteers: [] };
-        save();
+        /* read-only filesystem (e.g., Vercel) — proceed with in-memory only */
     }
-    return _db!;
+    if (fs.existsSync(DB_PATH)) {
+        try {
+            _db = JSON.parse(fs.readFileSync(DB_PATH, "utf8")) as Db;
+            _db.users = (_db.users ?? []).map((u) => ({ ...u, role: u.role ?? "resident" }));
+            _db.volunteers = _db.volunteers ?? [];
+            return _db;
+        } catch {
+            /* corrupt or unreadable — fall through to fresh state */
+        }
+    }
+    _db = { users: [], volunteers: [] };
+    save();
+    return _db;
 }
 
 function save(): void {
     if (!_db) return;
-    fs.writeFileSync(DB_PATH, JSON.stringify(_db, null, 2));
+    try {
+        fs.writeFileSync(DB_PATH, JSON.stringify(_db, null, 2));
+    } catch {
+        /* read-only filesystem — keep in-memory only. State will not persist
+           across cold starts on serverless. Acceptable for demo deployments. */
+    }
 }
 
 export const db = {

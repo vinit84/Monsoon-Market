@@ -5,7 +5,7 @@ import { Topbar } from "@/components/topbar";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-    title: "Monsoon Mandi · Agent Economy on Monad",
+    title: "Monsoon Market · Agent Economy on Monad",
     description:
         "Autonomous agent marketplace for Mumbai monsoon emergency relief. Built on Monad testnet for the Blitz V3 'Agent Economy' hackathon.",
     generator: "monskills",

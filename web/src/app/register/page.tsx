@@ -94,7 +94,7 @@ export default function RegisterPage() {
     return (
         <div className="max-w-2xl mx-auto">
             <Card>
-                <CardHeader title="Create Account" description="Join the Monsoon Mandi marketplace" />
+                <CardHeader title="Create Account" description="Join the Monsoon Market marketplace" />
 
                 {/* Role tabs */}
                 <div className="grid grid-cols-2 gap-2 mb-6 p-1 bg-[var(--color-paper-dark)] rounded-md">

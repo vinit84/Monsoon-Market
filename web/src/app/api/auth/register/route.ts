@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession, createUser, userExists } from "@/lib/auth/session";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const Body = z.discriminatedUnion("role", [
     z.object({
         role: z.literal("resident"),
@@ -22,15 +25,21 @@ const Body = z.discriminatedUnion("role", [
 ]);
 
 export async function POST(req: Request): Promise<Response> {
-    const json = await req.json().catch(() => null);
-    const parsed = Body.safeParse(json);
-    if (!parsed.success) {
-        return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
-    }
-    if (userExists(parsed.data.email)) {
-        return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
-    }
     try {
+        const json = await req.json().catch(() => null);
+        const parsed = Body.safeParse(json);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+                { status: 400 },
+            );
+        }
+        if (userExists(parsed.data.email)) {
+            return NextResponse.json(
+                { error: "An account with this email already exists" },
+                { status: 409 },
+            );
+        }
         const data = parsed.data;
         const user =
             data.role === "volunteer"
@@ -56,7 +65,16 @@ export async function POST(req: Request): Promise<Response> {
         session.user = user;
         await session.save();
         return NextResponse.json({ ok: true, user });
-    } catch (e) {
-        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 400 });
+    } catch (err) {
+        console.error("[api/auth/register] failed", err);
+        const message = err instanceof Error ? err.message : "Internal error";
+        // Validation-style errors thrown by createUser should remain 400.
+        const isValidation =
+            err instanceof Error &&
+            /already exists|required|at least|valid wallet/i.test(err.message);
+        return NextResponse.json(
+            { error: isValidation ? message : "Registration failed", detail: message },
+            { status: isValidation ? 400 : 500 },
+        );
     }
 }

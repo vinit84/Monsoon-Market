@@ -23,7 +23,7 @@ const monadTestnet = defineChain({
 });
 
 export const config = getDefaultConfig({
-    appName: "Monsoon Mandi",
+    appName: "Monsoon Market",
     projectId: "3a8170812b534d0ff9d794f19a901d64", // Free WalletConnect Cloud project
     chains: [anvil, monadTestnet],
     ssr: true,

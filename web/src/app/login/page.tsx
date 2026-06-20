@@ -45,7 +45,7 @@ export default function LoginPage() {
     return (
         <div className="max-w-md mx-auto mt-12">
             <Card>
-                <CardHeader title="Sign In" description="Welcome back to Monsoon Mandi" />
+                <CardHeader title="Sign In" description="Welcome back to Monsoon Market" />
                 <form onSubmit={submit} className="space-y-4">
                     {error && <div className="sk-result-error text-[12.5px]">{error}</div>}
                     <div>

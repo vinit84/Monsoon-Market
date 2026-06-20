@@ -15,11 +15,26 @@ export interface SessionData {
     user?: SessionUser;
 }
 
-const SESSION_PASSWORD =
-    process.env.SESSION_PASSWORD ?? "monsoon-mandi-hackathon-secret-key-do-not-use-in-prod-32chars-min";
+const FALLBACK_PASSWORD =
+    "monsoon-mandi-hackathon-secret-key-do-not-use-in-prod-32chars-min";
+
+function resolveSessionPassword(): string {
+    const fromEnv = process.env.SESSION_PASSWORD;
+    if (!fromEnv) return FALLBACK_PASSWORD;
+    if (fromEnv.length < 32) {
+        // iron-session requires >= 32 chars. Pad rather than throw a cryptic
+        // 500 at request time, but warn loudly in logs.
+        console.warn(
+            "[auth] SESSION_PASSWORD is shorter than 32 chars; padding with fallback. " +
+                "Set a longer secret in Vercel env vars.",
+        );
+        return (fromEnv + FALLBACK_PASSWORD).slice(0, 64);
+    }
+    return fromEnv;
+}
 
 export const sessionOptions: SessionOptions = {
-    password: SESSION_PASSWORD,
+    password: resolveSessionPassword(),
     cookieName: "monsoon_mandi_session",
     cookieOptions: {
         secure: process.env.NODE_ENV === "production",
@@ -34,36 +49,47 @@ export async function getSession() {
     return getIronSession<SessionData>(cookieStore, sessionOptions);
 }
 
-// Pre-seed two demo users on first run.
-seedDemoAccounts();
-function seedDemoAccounts() {
-    if (!db.findUser("resident@monsoon.local")) {
-        db.createUser({
-            email: "resident@monsoon.local",
-            passwordHash: hashPassword("demo1234"),
-            name: "Demo Resident",
-            role: "resident",
-            createdAt: Date.now(),
-        });
-    }
-    if (!db.findUser("volunteer@monsoon.local")) {
-        db.createUser({
-            email: "volunteer@monsoon.local",
-            passwordHash: hashPassword("demo1234"),
-            name: "Demo Volunteer",
-            role: "volunteer",
-            createdAt: Date.now(),
-        });
-    }
-    // Backfill: legacy demo@monsoon.local from earlier sessions
-    if (!db.findUser("demo@monsoon.local")) {
-        db.createUser({
-            email: "demo@monsoon.local",
-            passwordHash: hashPassword("demo1234"),
-            name: "Demo Resident",
-            role: "resident",
-            createdAt: Date.now(),
-        });
+let _seeded = false;
+/**
+ * Idempotent demo-account seeding. Called lazily on the first auth request
+ * instead of at module load — module-level side effects can crash the entire
+ * route on cold start in serverless environments and turn into bare 500s.
+ */
+export function ensureDemoAccountsSeeded(): void {
+    if (_seeded) return;
+    try {
+        if (!db.findUser("resident@monsoon.local")) {
+            db.createUser({
+                email: "resident@monsoon.local",
+                passwordHash: hashPassword("demo1234"),
+                name: "Demo Resident",
+                role: "resident",
+                createdAt: Date.now(),
+            });
+        }
+        if (!db.findUser("volunteer@monsoon.local")) {
+            db.createUser({
+                email: "volunteer@monsoon.local",
+                passwordHash: hashPassword("demo1234"),
+                name: "Demo Volunteer",
+                role: "volunteer",
+                createdAt: Date.now(),
+            });
+        }
+        // Backfill: legacy demo@monsoon.local from earlier sessions
+        if (!db.findUser("demo@monsoon.local")) {
+            db.createUser({
+                email: "demo@monsoon.local",
+                passwordHash: hashPassword("demo1234"),
+                name: "Demo Resident",
+                role: "resident",
+                createdAt: Date.now(),
+            });
+        }
+        _seeded = true;
+    } catch (err) {
+        // Don't kill the request — log and let auth fall through to invalid creds.
+        console.error("[auth] demo seeding failed", err);
     }
 }
 
@@ -76,6 +102,7 @@ function hashPassword(password: string): string {
 }
 
 export function userExists(email: string): boolean {
+    ensureDemoAccountsSeeded();
     return Boolean(db.findUser(email));
 }
 
@@ -95,6 +122,7 @@ export interface CreateUserInput {
 }
 
 export function createUser(input: CreateUserInput): SessionUser {
+    ensureDemoAccountsSeeded();
     if (db.findUser(input.email)) throw new Error("User already exists");
     if (input.password.length < 6) throw new Error("Password must be at least 6 characters");
 
@@ -140,6 +168,7 @@ export function createUser(input: CreateUserInput): SessionUser {
 }
 
 export function verifyUser(email: string, password: string): SessionUser | null {
+    ensureDemoAccountsSeeded();
     const u = db.findUser(email);
     if (!u) return null;
     if (u.passwordHash !== hashPassword(password)) return null;

@@ -1,8 +1,8 @@
-# 🌧️ Monsoon Mandi
+# 🌧️ Monsoon Market
 
 > **An autonomous agent economy for Mumbai monsoon emergency relief, built on Monad.**
 
-When Mumbai's monsoon hits, coordination breaks. Pharmacies flood out, food relief gets scattered across WhatsApp groups, volunteers can't tell which routes are safe, and no one knows whether the help that was promised actually arrived. **Monsoon Mandi** turns that chaos into a market — a live agent economy where five autonomous AI agents bid for, fulfil, and verify emergency requests, settling everything on-chain in under 90 seconds.
+When Mumbai's monsoon hits, coordination breaks. Pharmacies flood out, food relief gets scattered across WhatsApp groups, volunteers can't tell which routes are safe, and no one knows whether the help that was promised actually arrived. **Monsoon Market** turns that chaos into a market — a live agent economy where five autonomous AI agents bid for, fulfil, and verify emergency requests, settling everything on-chain in under 90 seconds.
 
 Built for **[Monad Blitz Mumbai V3](https://monad-foundation.notion.site/Monad-Blitz-Mumbai-V3-The-Agent-Economy-3846367594f280998a86dea953fa1578)** · theme: *The Agent Economy*.
 

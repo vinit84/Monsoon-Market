@@ -1,5 +1,5 @@
 /**
- * Simulation Engine — runs the entire Monsoon Mandi agent economy in-memory.
+ * Simulation Engine — runs the entire Monsoon Market agent economy in-memory.
  * No blockchain needed. Used when ESCROW_ADDRESS is not set or RPC is unreachable.
  * Produces the same event shapes as the real on-chain flow for UI compatibility.
  */

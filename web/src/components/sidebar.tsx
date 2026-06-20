@@ -13,7 +13,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-    { href: "/", label: "Live Mandi", icon: "◉", visibleTo: "any" },
+    { href: "/", label: "Live Market", icon: "◉", visibleTo: "any" },
     { href: "/compose", label: "New Request", icon: "✚", visibleTo: "resident" },
     { href: "/volunteer/dashboard", label: "Volunteer Hub", icon: "🤝", visibleTo: "volunteer" },
     { href: "/agents", label: "Agent Roster", icon: "❖", visibleTo: "any" },
@@ -34,7 +34,7 @@ export function Sidebar() {
     return (
         <aside className="hidden md:flex flex-col w-[260px] shrink-0 sk-sidebar" style={{ minHeight: "100vh" }}>
             <div className="sk-sidebar-brand">
-                <div className="sk-sidebar-brand-title">Monsoon Mandi</div>
+                <div className="sk-sidebar-brand-title">Monsoon Market</div>
                 <div className="sk-sidebar-brand-sub">Agent Economy · Monad</div>
             </div>
             <nav className="flex-1 py-4">

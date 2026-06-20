@@ -41,7 +41,7 @@ async function onProofSubmitted(log: { args?: Record<string, unknown> }): Promis
 
     const result = await verifyProof({
         proofImageUrl: proofUrl,
-        requestSummary: `Monsoon Mandi delivery proof for request #${requestId}`,
+        requestSummary: `Monsoon Market delivery proof for request #${requestId}`,
     });
     console.log(`[verifier] verdict ${result.verdict} (source=${result.source})`);
 
