@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
-import { after } from "next/server";
 import { z } from "zod";
 import { getServerEnv } from "@/config/env";
-import {
-    simulateRequest,
-    runMockAgentFlowForExistingRequest,
-} from "@/lib/sim/engine";
+import { simulateRequest } from "@/lib/sim/engine";
 import { postRequestOnChain } from "@/lib/onchain/orchestrator";
 
 // Real on-chain postRequest needs node runtime + extra time on Vercel.
@@ -21,6 +17,17 @@ const Body = z.object({
     requesterAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/u),
 });
 
+/**
+ * Hybrid request flow.
+ *
+ * Server side does ONE thing: post the request on Monad testnet (real tx,
+ * real bounty escrowed, real Monadscan link). It returns the full request
+ * payload back to the client immediately. The agent tail (Anil's bid,
+ * Bina's bid, close, proof, attest) runs in the browser via
+ * `lib/sim/client-flow.ts`. This keeps Tx Stream and Live Bids consistent
+ * on Vercel — both panels read from the same in-tab event bus instead of
+ * fighting with module-level lambda state.
+ */
 export async function POST(req: Request): Promise<Response> {
     const json = await req.json().catch(() => null);
     const parsed = Body.safeParse(json);
@@ -28,18 +35,6 @@ export async function POST(req: Request): Promise<Response> {
         return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    // Hybrid mode (default for the Vercel deployment):
-    //   - postRequest is REAL on-chain — escrows the bounty on Monad testnet
-    //     and produces a real Monadscan tx hash for the UI.
-    //   - The volunteer/close/proof/attest tail runs in the in-memory simulator
-    //     so Volunteer Anil and Volunteer Bina compete against each other with
-    //     persona-flavoured prices, exactly like the original mock UX.
-    //
-    // Why hybrid: the deployed wallet is single-key (all agents share one
-    // address). Doing two on-chain bids from the same address looks weird in
-    // the bid list. Keeping the bidding tail as a simulation preserves the
-    // "two competing volunteers" demo while still proving real Monad write
-    // capability with the postRequest tx.
     const env = getServerEnv();
     if (env.ESCROW_ADDRESS) {
         try {
@@ -51,18 +46,6 @@ export async function POST(req: Request): Promise<Response> {
                 requesterAddress: parsed.data.requesterAddress as `0x${string}`,
             });
 
-            // The on-chain post already registered a SimRequest in the sim engine
-            // and emitted a real RequestPosted event. Now run the simulated tail
-            // (Anil + Bina bid → close → proof → verifier) so the UI animates
-            // exactly like the mock did.
-            after(async () => {
-                try {
-                    await runMockAgentFlowForExistingRequest(result.requestId);
-                } catch (err) {
-                    console.error("[api/request] simulated tail failed", err);
-                }
-            });
-
             return NextResponse.json({
                 ok: true,
                 source: "hybrid",
@@ -71,6 +54,13 @@ export async function POST(req: Request): Promise<Response> {
                 ipfsUri: result.ipfsUri,
                 explorerUrl: result.explorerUrl,
                 deadline: result.deadline,
+                // echoed back so the client-side flow has everything it needs
+                // to seed the in-tab event bus without a follow-up fetch
+                bountyMon: parsed.data.bountyMon,
+                category: parsed.data.category,
+                location: parsed.data.location,
+                description: parsed.data.description,
+                requesterAddress: parsed.data.requesterAddress,
                 message:
                     "Request posted on Monad testnet. Anil and Bina are bidding now — watch the Tx Stream.",
             });
@@ -89,8 +79,9 @@ export async function POST(req: Request): Promise<Response> {
         }
     }
 
-    // Local-dev fallback: no contract configured → full in-memory simulation.
-    console.warn("[api/request] ESCROW_ADDRESS not set — falling back to in-memory simulation");
+    // Local-dev fallback: no contract configured → return a fake request
+    // payload that the client-side flow will animate locally.
+    console.warn("[api/request] ESCROW_ADDRESS not set — returning simulation payload");
     const simReq = simulateRequest(parsed.data);
     return NextResponse.json({
         ok: true,
@@ -98,6 +89,13 @@ export async function POST(req: Request): Promise<Response> {
         requestId: simReq.id,
         txHash: `0xsim_${simReq.id.toString(16).padStart(8, "0")}`,
         ipfsUri: simReq.ipfsUri,
+        explorerUrl: "#",
+        deadline: simReq.deadline,
+        bountyMon: parsed.data.bountyMon,
+        category: parsed.data.category,
+        location: parsed.data.location,
+        description: parsed.data.description,
+        requesterAddress: parsed.data.requesterAddress,
         message:
             "ESCROW_ADDRESS not configured — running fully simulated flow. Set the env var to use real Monad testnet for the post.",
     });

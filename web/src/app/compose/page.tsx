@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRoleGuard } from "@/hooks/use-role-guard";
+import { kickoffClientFlow } from "@/lib/sim/client-flow";
 
 const CATEGORIES = ["medicine", "food_packet", "water_bottle", "first_aid", "blanket"];
 const LOCATIONS = [
@@ -46,10 +47,48 @@ export default function ComposePage() {
                     requesterAddress: address ?? "0x0000000000000000000000000000000000000000",
                 }),
             });
-            const json = (await res.json()) as { ok?: boolean; txHash?: string; ipfsUri?: string; requestId?: number; error?: unknown };
+            const json = (await res.json()) as {
+                ok?: boolean;
+                txHash?: string;
+                ipfsUri?: string;
+                requestId?: number;
+                explorerUrl?: string;
+                deadline?: number;
+                bountyMon?: number;
+                category?: string;
+                location?: string;
+                description?: string;
+                requesterAddress?: string;
+                source?: "onchain" | "hybrid" | "simulation";
+                error?: unknown;
+            };
             if (!res.ok || !json.ok) {
                 setResult({ error: typeof json.error === "string" ? json.error : JSON.stringify(json.error) });
             } else {
+                // Seed the in-tab event bus so the dashboard's Tx Stream and
+                // Live Bids panels animate as Anil and Bina bid against each
+                // other. The first event carries the real Monadscan link.
+                if (
+                    typeof json.txHash === "string" &&
+                    typeof json.requestId === "number" &&
+                    typeof json.bountyMon === "number" &&
+                    typeof json.deadline === "number"
+                ) {
+                    kickoffClientFlow({
+                        txHash: json.txHash,
+                        explorerUrl: json.explorerUrl ?? "#",
+                        requestId: json.requestId,
+                        ipfsUri: json.ipfsUri ?? "",
+                        deadlineMs: json.deadline,
+                        bountyMon: json.bountyMon,
+                        category: json.category ?? form.category,
+                        location: json.location ?? form.location,
+                        description: json.description ?? form.description,
+                        requesterAddress:
+                            json.requesterAddress ?? address ?? "0x0000000000000000000000000000000000000000",
+                        source: json.source ?? "simulation",
+                    });
+                }
                 setResult({ txHash: json.txHash, ipfsUri: json.ipfsUri, requestId: json.requestId });
             }
         } catch (e) {
