@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAccount } from "wagmi";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -25,6 +27,7 @@ const LOCATIONS = [
 
 export default function ComposePage() {
     const guard = useRoleGuard("resident");
+    const router = useRouter();
     const { address, isConnected } = useAccount();
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<{ txHash?: string; ipfsUri?: string; requestId?: number; error?: string } | null>(null);
@@ -88,6 +91,10 @@ export default function ComposePage() {
                             json.requesterAddress ?? address ?? "0x0000000000000000000000000000000000000000",
                         source: json.source ?? "simulation",
                     });
+                    // Client-side navigate to the live dashboard so the
+                    // in-tab event bus and the running setTimeout chain
+                    // survive (a full <a href> reload would wipe both).
+                    router.push("/");
                 }
                 setResult({ txHash: json.txHash, ipfsUri: json.ipfsUri, requestId: json.requestId });
             }
@@ -191,7 +198,7 @@ export default function ComposePage() {
                             <p className="text-[12px] text-[color:var(--color-ink-muted)]">
                                 ✓ Auction is open for 10 seconds. Watch the live dashboard →
                             </p>
-                            <a className="sk-btn sk-btn-secondary" href="/">View Live Dashboard</a>
+                            <Link className="sk-btn sk-btn-secondary" href="/">View Live Dashboard</Link>
                         </div>
                     )}
                     {!result && (
