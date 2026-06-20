@@ -1,0 +1,19 @@
+# Repository-wide ignores. Subprojects (web/, contracts/) keep their own.
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build outputs
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+
+# Foundry submodule output
+contracts/lib/forge-std/cache/

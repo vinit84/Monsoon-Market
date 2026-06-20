@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+/* ============================================================================
+ * Monsoon Mandi design tokens (Shopify Polaris-inspired).
+ * Source of truth: .kiro/steering/design-system.md
+ * ========================================================================== */
+
+:root {
+  /* Surfaces & background */
+  --color-background: #f6f6f7;
+  --color-surface: #ffffff;
+
+  /* Brand */
+  --color-brand: #008060;
+  --color-brand-hover: #004c3f;
+
+  /* Text */
+  --color-text-primary: #202223;
+  --color-text-secondary: #6d7175;
+  --color-text-disabled: #8c9196;
+
+  /* Accent */
+  --color-link: #0070d9;
+
+  /* Borders */
+  --color-border: #c9ccCF;
+  --color-border-subdued: #e4e5e7;
+
+  /* Semantic / status */
+  --color-success: #008060;
+  --color-success-bg: #e3f1df;
+  --color-success-fg: #1a4d2e;
+  --color-warning: #ffc453;
+  --color-warning-bg: #fff5d9;
+  --color-warning-fg: #8a6d00;
+  --color-critical: #d72c0d;
+  --color-critical-bg: #ffebe9;
+  --color-critical-fg: #8e1b11;
+  --color-info-bg: #eaf4fb;
+  --color-info-fg: #0046a8;
+
+  /* Sidebar */
+  --color-sidebar-bg: #1a1a1a;
+  --color-sidebar-fg: #ffffff;
+
+  /* Shadows */
+  --shadow-raised: 0 1px 0 rgba(22, 29, 37, 0.05);
+  --shadow-overlay: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text-primary);
+  --color-brand: var(--color-brand);
+  --color-brand-hover: var(--color-brand-hover);
+  --color-link: var(--color-link);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-border: var(--color-border);
+  --color-border-subdued: var(--color-border-subdued);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-critical: var(--color-critical);
+  --color-sidebar-bg: var(--color-sidebar-bg);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: Menlo, Monaco, "Courier New", monospace;
+}
+
+* {
+  border-color: var(--color-border-subdued);
+}
+
+html,
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+/* Headings follow design system hierarchy */
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Code-typeface uses for tx hashes etc. */
+code,
+.font-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+a {
+  color: var(--color-link);
+}
+
+/* Reusable utility classes that wrap the design tokens */
+.mm-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subdued);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: var(--shadow-raised);
+}
+
+.mm-button-primary {
+  background: var(--color-brand);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background 120ms ease;
+}
+.mm-button-primary:hover {
+  background: var(--color-brand-hover);
+}
+.mm-button-primary:disabled {
+  background: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.mm-button-secondary {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mm-input {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--color-surface);
+  width: 100%;
+}
+.mm-input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px rgba(0, 128, 96, 0.2);
+}
+
+.mm-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.mm-badge-success {
+  background: var(--color-success-bg);
+  color: var(--color-success-fg);
+}
+.mm-badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-fg);
+}
+.mm-badge-critical {
+  background: var(--color-critical-bg);
+  color: var(--color-critical-fg);
+}
+.mm-badge-info {
+  background: var(--color-info-bg);
+  color: var(--color-info-fg);
+}
+
+/* Data tables: no outer border, only row separators per design system */
+.mm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.mm-table thead th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--color-text-secondary);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-subdued);
+}
+.mm-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border-subdued);
+}
+.mm-table tbody tr:hover td {
+  background: var(--color-background);
+}

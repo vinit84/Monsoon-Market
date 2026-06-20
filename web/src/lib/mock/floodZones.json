@@ -1,0 +1,24 @@
+{
+  "zones": [
+    {
+      "name": "Andheri East flood corridor",
+      "nodeIds": ["andheri_e", "marol"],
+      "severity": 0.6
+    },
+    {
+      "name": "Sion Circle waterlogging",
+      "nodeIds": ["sion"],
+      "severity": 0.8
+    },
+    {
+      "name": "Kurla West underbridge",
+      "nodeIds": ["kurla_w"],
+      "severity": 0.5
+    },
+    {
+      "name": "Dadar TT junction",
+      "nodeIds": ["dadar_tt"],
+      "severity": 0.4
+    }
+  ]
+}

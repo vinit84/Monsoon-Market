@@ -1,0 +1,40 @@
+{
+  "donors": [
+    {
+      "donorId": "d-andheri-pharm",
+      "name": "Andheri Pharma Co-op",
+      "locationName": "Andheri West",
+      "items": [
+        { "category": "medicine", "quantity": 50, "unitCostMon": 0.012 },
+        { "category": "first_aid", "quantity": 20, "unitCostMon": 0.008 }
+      ]
+    },
+    {
+      "donorId": "d-bandra-kitchen",
+      "name": "Bandra Community Kitchen",
+      "locationName": "Bandra West",
+      "items": [
+        { "category": "food_packet", "quantity": 100, "unitCostMon": 0.006 },
+        { "category": "water_bottle", "quantity": 200, "unitCostMon": 0.003 }
+      ]
+    },
+    {
+      "donorId": "d-dadar-mandir",
+      "name": "Dadar Mandir Trust",
+      "locationName": "Dadar West",
+      "items": [
+        { "category": "food_packet", "quantity": 80, "unitCostMon": 0.005 },
+        { "category": "blanket", "quantity": 30, "unitCostMon": 0.015 }
+      ]
+    },
+    {
+      "donorId": "d-worli-clinic",
+      "name": "Worli Free Clinic",
+      "locationName": "Worli",
+      "items": [
+        { "category": "medicine", "quantity": 35, "unitCostMon": 0.014 },
+        { "category": "first_aid", "quantity": 25, "unitCostMon": 0.009 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "nodes": [
+    { "id": "andheri_e", "name": "Andheri East", "lat": 19.1136, "lng": 72.8697 },
+    { "id": "andheri_w", "name": "Andheri West", "lat": 19.1346, "lng": 72.8270 },
+    { "id": "marol", "name": "Marol", "lat": 19.1186, "lng": 72.8825 },
+    { "id": "bandra_w", "name": "Bandra West", "lat": 19.0596, "lng": 72.8295 },
+    { "id": "kurla_w", "name": "Kurla West", "lat": 19.0728, "lng": 72.8826 },
+    { "id": "sion", "name": "Sion", "lat": 19.0428, "lng": 72.8616 },
+    { "id": "dadar_tt", "name": "Dadar TT", "lat": 19.0188, "lng": 72.8475 },
+    { "id": "dadar_w", "name": "Dadar West", "lat": 19.0184, "lng": 72.8410 },
+    { "id": "worli", "name": "Worli", "lat": 19.0176, "lng": 72.8147 }
+  ],
+  "edges": [
+    { "from": "andheri_w", "to": "andheri_e", "distanceMeters": 3500, "baseEtaSeconds": 480 },
+    { "from": "andheri_e", "to": "marol", "distanceMeters": 2200, "baseEtaSeconds": 300 },
+    { "from": "marol", "to": "kurla_w", "distanceMeters": 5500, "baseEtaSeconds": 720 },
+    { "from": "andheri_w", "to": "bandra_w", "distanceMeters": 8400, "baseEtaSeconds": 1080 },
+    { "from": "bandra_w", "to": "kurla_w", "distanceMeters": 4900, "baseEtaSeconds": 660 },
+    { "from": "kurla_w", "to": "sion", "distanceMeters": 4100, "baseEtaSeconds": 540 },
+    { "from": "sion", "to": "dadar_tt", "distanceMeters": 3200, "baseEtaSeconds": 420 },
+    { "from": "dadar_tt", "to": "dadar_w", "distanceMeters": 800, "baseEtaSeconds": 120 },
+    { "from": "dadar_w", "to": "worli", "distanceMeters": 4500, "baseEtaSeconds": 600 },
+    { "from": "bandra_w", "to": "worli", "distanceMeters": 6700, "baseEtaSeconds": 840 }
+  ]
+}
