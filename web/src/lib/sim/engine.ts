@@ -43,6 +43,34 @@ export interface SimEvent {
     explorerUrl: string;
     observedAt: number;
     details?: string;
+    /**
+     * Optional structured payload so the client can rebuild Live Bids / status
+     * state from the SSE stream alone — avoids relying on server-side singleton
+     * state that doesn't persist across Vercel lambda invocations.
+     */
+    payload?: {
+        // RequestPosted
+        bountyMon?: number;
+        category?: string;
+        location?: string;
+        description?: string;
+        deadline?: number; // ms
+        ipfsUri?: string;
+        requesterAddress?: string;
+        // BidSubmitted
+        agentLabel?: string;
+        agentAddress?: string;
+        priceMon?: number;
+        etaSeconds?: number;
+        completedTasks?: number;
+        score?: number;
+        // AuctionClosed
+        winnerAddress?: string;
+        winnerLabel?: string;
+        winningPriceMon?: number;
+        // Attestation
+        verdict?: "accepted" | "rejected";
+    };
 }
 
 type Listener = (e: SimEvent) => void;
@@ -160,6 +188,15 @@ export function simulateRequest(req: {
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
         details: `Bounty: ${req.bountyMon} MON · Location: ${req.location}`,
+        payload: {
+            bountyMon: req.bountyMon,
+            category: req.category,
+            location: req.location,
+            description: req.description,
+            deadline: request.deadline,
+            ipfsUri,
+            requesterAddress: req.requesterAddress,
+        },
     });
 
     // Schedule agent actions
@@ -217,6 +254,14 @@ async function scheduleAgentFlow(request: SimRequest) {
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
         details: `Price: ${bidA.priceMon} MON · ETA: ${bidA.etaSeconds}s · Stake: 0.01 MON`,
+        payload: {
+            agentLabel: bidA.agentLabel,
+            agentAddress: bidA.agentAddress,
+            priceMon: bidA.priceMon,
+            etaSeconds: bidA.etaSeconds,
+            completedTasks: bidA.completedTasks,
+            score: bidA.score,
+        },
     });
 
     // 4. Volunteer B bids (3s delay)
@@ -241,6 +286,14 @@ async function scheduleAgentFlow(request: SimRequest) {
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
         details: `Price: ${bidB.priceMon} MON · ETA: ${bidB.etaSeconds}s · Stake: 0.01 MON`,
+        payload: {
+            agentLabel: bidB.agentLabel,
+            agentAddress: bidB.agentAddress,
+            priceMon: bidB.priceMon,
+            etaSeconds: bidB.etaSeconds,
+            completedTasks: bidB.completedTasks,
+            score: bidB.score,
+        },
     });
 
     // 5. Wait for auction deadline (give humans time to bid via MetaMask)
@@ -260,6 +313,11 @@ async function scheduleAgentFlow(request: SimRequest) {
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
         details: `Winner: ${winner.agentLabel} · Price: ${winner.priceMon} MON · Losing stake refunded`,
+        payload: {
+            winnerAddress: winner.agentAddress,
+            winnerLabel: winner.agentLabel,
+            winningPriceMon: winner.priceMon,
+        },
     });
 
     // 6. Winner submits proof (2s)
@@ -293,6 +351,7 @@ async function scheduleAgentFlow(request: SimRequest) {
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
         details: `Verdict: ACCEPTED (Nugen vision) · ${winner.agentLabel} earned ${payout.toFixed(4)} MON (price ${winner.priceMon} + stake ${stakeAmount}) · Surplus ${(request.bountyMon - winner.priceMon).toFixed(4)} MON refunded`,
+        payload: { verdict: "accepted" },
     });
 
     // 8. ERC-8004 reputation write (0.5s)

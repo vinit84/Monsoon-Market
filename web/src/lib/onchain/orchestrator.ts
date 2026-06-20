@@ -131,6 +131,15 @@ export async function postRequestOnChain(input: PostRequestInput): Promise<PostR
         requestId: String(reqIdNum),
         explorerUrl,
         details: `Bounty ${input.bountyMon} MON · ${input.location} · IPFS ${ipfsUri.slice(0, 24)}…`,
+        payload: {
+            bountyMon: input.bountyMon,
+            category: input.category,
+            location: input.location,
+            description: input.description,
+            deadline: Number(deadline) * 1000,
+            ipfsUri,
+            requesterAddress: input.requesterAddress,
+        },
     });
 
     return {
