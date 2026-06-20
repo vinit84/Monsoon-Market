@@ -67,6 +67,27 @@ function emit(event: Omit<SimEvent, "observedAt">): SimEvent {
     return e;
 }
 
+/**
+ * External entry point so on-chain orchestrators can push real events into the
+ * same UI event stream the simulation uses. Real events carry real tx hashes
+ * and Monadscan explorer URLs.
+ */
+export function emitEvent(event: Omit<SimEvent, "observedAt">): SimEvent {
+    return emit(event);
+}
+
+/** Used by orchestrator when an on-chain request is created so subsequent flow steps can attach to it. */
+export function registerExternalRequest(request: SimRequest): void {
+    if (!_requests.find((r) => r.id === request.id)) {
+        _requests.push(request);
+    }
+    if (request.id > _nextId) _nextId = request.id;
+}
+
+export function findRequest(id: number): SimRequest | undefined {
+    return _requests.find((r) => r.id === id);
+}
+
 export function subscribe(l: Listener): () => void {
     _listeners.add(l);
     return () => _listeners.delete(l);
