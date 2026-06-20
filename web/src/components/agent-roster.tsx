@@ -42,8 +42,9 @@ export function AgentRoster() {
                     </thead>
                     <tbody>
                         {AGENTS.map((a) => {
-                            const earned = earnings[a.address.toLowerCase()] ?? earnings[a.address] ?? 0;
-                            const tasks = reputation[a.address.toLowerCase()] ?? reputation[a.address] ?? 0;
+                            const key = a.address.toLowerCase();
+                            const earned = earnings[key] ?? 0;
+                            const tasks = reputation[key] ?? 0;
                             return (
                                 <tr key={a.address}>
                                     <td>

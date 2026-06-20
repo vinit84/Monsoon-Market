@@ -149,7 +149,8 @@ const AGENTS = {
 
 // Ensure initial reputation
 Object.values(AGENTS).forEach((a) => {
-    if (!_reputation[a.address]) _reputation[a.address] = 0;
+    const key = a.address.toLowerCase();
+    if (_reputation[key] === undefined) _reputation[key] = 0;
 });
 
 /**
@@ -234,12 +235,13 @@ async function scheduleAgentFlow(request: SimRequest) {
 
     // 3. Volunteer A bids (2s delay)
     await delay(500);
+    const anilAddr = AGENTS.volunteerA.address.toLowerCase();
     const bidA: SimBid = {
         agentLabel: AGENTS.volunteerA.label,
-        agentAddress: AGENTS.volunteerA.address,
+        agentAddress: anilAddr,
         priceMon: Math.round((request.bountyMon * 0.7 + Math.random() * 0.01) * 1000) / 1000,
         etaSeconds: 300 + Math.floor(Math.random() * 60),
-        completedTasks: _reputation[AGENTS.volunteerA.address] ?? 0,
+        completedTasks: _reputation[anilAddr] ?? 0,
         score: 0,
         txHash: fakeTxHash(),
     };
@@ -266,12 +268,13 @@ async function scheduleAgentFlow(request: SimRequest) {
 
     // 4. Volunteer B bids (3s delay)
     await delay(1000);
+    const binaAddr = AGENTS.volunteerB.address.toLowerCase();
     const bidB: SimBid = {
         agentLabel: AGENTS.volunteerB.label,
-        agentAddress: AGENTS.volunteerB.address,
+        agentAddress: binaAddr,
         priceMon: Math.round((request.bountyMon * 0.6 + Math.random() * 0.01) * 1000) / 1000,
         etaSeconds: 400 + Math.floor(Math.random() * 60),
-        completedTasks: _reputation[AGENTS.volunteerB.address] ?? 0,
+        completedTasks: _reputation[binaAddr] ?? 0,
         score: 0,
         txHash: fakeTxHash(),
     };
@@ -338,10 +341,11 @@ async function scheduleAgentFlow(request: SimRequest) {
     await delay(2000);
     request.verdict = "accepted";
     request.state = "fulfilled";
-    _reputation[winner.agentAddress] = (_reputation[winner.agentAddress] ?? 0) + 1;
+    const winnerAddr = winner.agentAddress.toLowerCase();
+    _reputation[winnerAddr] = (_reputation[winnerAddr] ?? 0) + 1;
     const stakeAmount = 0.01;
     const payout = winner.priceMon + stakeAmount;
-    _earnings[winner.agentAddress] = (_earnings[winner.agentAddress] ?? 0) + payout;
+    _earnings[winnerAddr] = (_earnings[winnerAddr] ?? 0) + payout;
     emit({
         txHash: fakeTxHash(),
         blockNumber: _blockNumber,
@@ -361,10 +365,10 @@ async function scheduleAgentFlow(request: SimRequest) {
         blockNumber: _blockNumber,
         eventName: "ReputationUpdated",
         actionLabel: "reputation +1",
-        actor: winner.agentAddress,
+        actor: winnerAddr,
         requestId: String(id),
         explorerUrl: `#tx-${_blockNumber}`,
-        details: `${winner.agentLabel} now has ${_reputation[winner.agentAddress]} completed tasks`,
+        details: `${winner.agentLabel} now has ${_reputation[winnerAddr]} completed tasks`,
     });
 }
 
