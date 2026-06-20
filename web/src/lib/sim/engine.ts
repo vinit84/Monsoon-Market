@@ -313,6 +313,22 @@ function delay(ms: number): Promise<void> {
     return new Promise((r) => setTimeout(r, ms));
 }
 
+/**
+ * Run the simulated volunteer/close/proof/attest tail on a request that was
+ * already created (e.g., posted on-chain). Skips the initial RequestPosted
+ * emit because the caller already pushed a real on-chain RequestPosted event
+ * with a real tx hash. Keeps the two-volunteer-bidding visual exactly as it
+ * was in the pure mock.
+ */
+export async function runMockAgentFlowForExistingRequest(requestId: number): Promise<void> {
+    const request = _requests.find((r) => r.id === requestId);
+    if (!request) {
+        console.warn(`[sim] runMockAgentFlow: request ${requestId} not found`);
+        return;
+    }
+    await scheduleAgentFlow(request);
+}
+
 
 /**
  * Inject a human-submitted bid into an open simulation request.
