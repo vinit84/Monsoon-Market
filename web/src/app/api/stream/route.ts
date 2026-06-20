@@ -1,35 +1,50 @@
-import { getTxStreamHub, type StreamEvent } from "@/lib/stream/tx-stream-hub";
+import { subscribe, getEvents, type SimEvent } from "@/lib/sim/engine";
 
-/** Server-Sent Events feed of escrow contract events. */
+/** Server-Sent Events feed of simulated agent events. */
 export async function GET(): Promise<Response> {
-    const hub = getTxStreamHub();
     const encoder = new TextEncoder();
+    let closed = false;
+    let heartbeat: ReturnType<typeof setInterval> | null = null;
+    let unsubscribe: (() => void) | null = null;
 
     const stream = new ReadableStream<Uint8Array>({
         start(controller) {
-            const send = (e: StreamEvent) => {
-                const payload = JSON.stringify({
-                    ...e,
-                    raw: undefined, // strip raw to keep SSE small
-                });
-                controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
-            };
-            // Send heartbeat every 15 s so proxies don't close the connection.
-            const heartbeat = setInterval(() => {
-                controller.enqueue(encoder.encode(`: heartbeat\n\n`));
+            // Replay existing events
+            for (const e of getEvents()) {
+                if (closed) return;
+                try {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(e)}\n\n`));
+                } catch { break; }
+            }
+
+            // Subscribe to new events
+            unsubscribe = subscribe((e: SimEvent) => {
+                if (closed) return;
+                try {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(e)}\n\n`));
+                } catch {
+                    closed = true;
+                }
+            });
+
+            // Heartbeat every 15s
+            heartbeat = setInterval(() => {
+                if (closed) {
+                    if (heartbeat) clearInterval(heartbeat);
+                    return;
+                }
+                try {
+                    controller.enqueue(encoder.encode(`: heartbeat\n\n`));
+                } catch {
+                    closed = true;
+                    if (heartbeat) clearInterval(heartbeat);
+                }
             }, 15_000);
-            const unsubscribe = hub.subscribe(send);
-            // Cleanup when the client disconnects.
-            const cleanup = () => {
-                clearInterval(heartbeat);
-                unsubscribe();
-            };
-            // ReadableStream cancel handler is implemented by the caller via signal.
-            // Wire it via `cancel` below.
-            (this as unknown as { _cleanup?: () => void })._cleanup = cleanup;
         },
         cancel() {
-            (this as unknown as { _cleanup?: () => void })._cleanup?.();
+            closed = true;
+            if (heartbeat) clearInterval(heartbeat);
+            if (unsubscribe) unsubscribe();
         },
     });
 

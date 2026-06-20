@@ -1,69 +1,55 @@
+"use client";
+
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { configuredAgents, type AgentLabel } from "@/lib/onchain/wallets";
-import { explorerAddressUrl } from "@/lib/onchain/chain";
 import { shortAddr } from "@/lib/utils";
-import { getDemoTier } from "@/config/tiers";
+import { useSimState } from "@/hooks/use-sim-state";
 
-const LABEL_DISPLAY: Record<AgentLabel, string> = {
-    "deployer": "Deployer",
-    "resident-relayer": "Resident Relayer",
-    "volunteer-a": "Volunteer Anil",
-    "volunteer-b": "Volunteer Bina",
-    "supply": "Supply Agent",
-    "route": "Route Agent",
-    "verifier": "Verifier Agent",
-};
+const AGENTS: { label: string; address: string; role: string }[] = [
+    { label: "Resident Relayer", address: "0xD761096e542a344429CeB1a68C52bDAB1dB9C78D", role: "Posts requests on behalf of residents" },
+    { label: "Volunteer Anil",  address: "0xA111111111111111111111111111111111111111", role: "Bids · fast scooter" },
+    { label: "Volunteer Bina",  address: "0xB222222222222222222222222222222222222222", role: "Bids · cheap on foot" },
+    { label: "Supply Agent",    address: "0xC333333333333333333333333333333333333333", role: "Sells inventory quotes" },
+    { label: "Route Agent",     address: "0xD444444444444444444444444444444444444444", role: "Sells x402 routing data" },
+    { label: "Verifier Agent",  address: "0xE555555555555555555555555555555555555555", role: "Vision LLM attestations" },
+];
 
 export function AgentRoster() {
-    const agents = configuredAgents();
-    const tier = getDemoTier();
-    const entries: { label: AgentLabel; address: `0x${string}` }[] = (Object.entries(agents) as [
-        AgentLabel,
-        `0x${string}`,
-    ][]).map(([label, address]) => ({ label, address }));
-
+    const { reputation } = useSimState();
     return (
         <Card>
-            <CardHeader title="Agent Roster" description={`Server-held EOAs configured for the ${tier} tier`} />
-            <table className="mm-table">
-                <thead>
-                    <tr>
-                        <th>Agent</th>
-                        <th>Address</th>
-                        <th>ERC-8004</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {entries.length === 0 ? (
+            <CardHeader title="Agent Roster" description="Six autonomous agents · server-held wallets" />
+            <div className="overflow-x-auto">
+                <table className="sk-table">
+                    <thead>
                         <tr>
-                            <td colSpan={3} className="text-[color:var(--color-text-secondary)]">
-                                No agent keys configured. Set them in <code>.env.local</code>.
-                            </td>
+                            <th>Agent</th>
+                            <th>Role</th>
+                            <th>Address</th>
+                            <th>Reputation</th>
                         </tr>
-                    ) : (
-                        entries.map(({ label, address }) => (
-                            <tr key={label}>
-                                <td>{LABEL_DISPLAY[label]}</td>
+                    </thead>
+                    <tbody>
+                        {AGENTS.map((a) => (
+                            <tr key={a.address}>
                                 <td>
-                                    <a className="font-mono" href={explorerAddressUrl(address)} target="_blank" rel="noopener">
-                                        {shortAddr(address)}
-                                    </a>
+                                    <div className="flex items-center gap-2">
+                                        <span className="sk-led sk-led-green" style={{ width: 8, height: 8 }} />
+                                        <span className="font-semibold">{a.label}</span>
+                                    </div>
+                                </td>
+                                <td className="text-[color:var(--color-ink-muted)] text-[12px]">{a.role}</td>
+                                <td>
+                                    <span className="font-mono text-[11px]">{shortAddr(a.address)}</span>
                                 </td>
                                 <td>
-                                    {tier === "demo-plus" ? (
-                                        <a className="text-[var(--color-link)]" href={`https://8004scan.io/agent/${address}`} target="_blank" rel="noopener">
-                                            View on 8004scan.io
-                                        </a>
-                                    ) : (
-                                        <Badge variant="info">MVP</Badge>
-                                    )}
+                                    <Badge variant="brass">{reputation[a.address] ?? 0} tasks</Badge>
                                 </td>
                             </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </Card>
     );
 }

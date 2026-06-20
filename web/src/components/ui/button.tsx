@@ -9,15 +9,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-    primary: "mm-button-primary",
-    secondary: "mm-button-secondary",
-    destructive: "mm-button-primary !bg-[var(--color-critical)] hover:!bg-[#a52209]",
-    plain: "text-[var(--color-brand)] hover:underline px-2 py-1",
+    primary: "sk-btn sk-btn-primary",
+    secondary: "sk-btn sk-btn-secondary",
+    destructive: "sk-btn sk-btn-destructive",
+    plain: "sk-btn sk-btn-plain",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ({ variant = "primary", className, ...props }, ref) => (
-        <button ref={ref} className={cn("inline-flex items-center justify-center min-h-[44px]", VARIANT_CLASSES[variant], className)} {...props} />
+        <button ref={ref} className={cn(VARIANT_CLASSES[variant], className)} {...props} />
     ),
 );
 Button.displayName = "Button";

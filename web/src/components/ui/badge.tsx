@@ -1,17 +1,18 @@
 import { type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "success" | "warning" | "critical" | "info";
+type BadgeVariant = "success" | "warning" | "critical" | "info" | "brass";
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
     variant: BadgeVariant;
 }
 
 const CLASSES: Record<BadgeVariant, string> = {
-    success: "mm-badge mm-badge-success",
-    warning: "mm-badge mm-badge-warning",
-    critical: "mm-badge mm-badge-critical",
-    info: "mm-badge mm-badge-info",
+    success: "sk-badge sk-badge-success",
+    warning: "sk-badge sk-badge-warning",
+    critical: "sk-badge sk-badge-critical",
+    info: "sk-badge sk-badge-info",
+    brass: "sk-badge sk-badge-brass",
 };
 
 export function Badge({ variant, className, ...props }: BadgeProps) {

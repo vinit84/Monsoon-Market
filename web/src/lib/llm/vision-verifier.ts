@@ -56,7 +56,7 @@ export async function verifyProof(input: VerifyProofInput): Promise<VerifierResu
             };
         }
     } catch (e) {
-        console.warn("[verifier] OpenAI fallback failed:", e);
+        console.warn("[verifier] OpenAI fallback skipped (no key or failed):", (e as Error).message);
     }
 
     return {

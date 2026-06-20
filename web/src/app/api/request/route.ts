@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { residentPostRequest } from "@/lib/agents/resident-relayer";
-import { pinJson } from "@/lib/ipfs/pin";
+import { simulateRequest } from "@/lib/sim/engine";
 
 const Body = z.object({
     category: z.string().min(1),
@@ -9,7 +8,6 @@ const Body = z.object({
     location: z.string().min(1),
     bountyMon: z.number().positive(),
     requesterAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/u),
-    requesterSignature: z.string().optional(),
 });
 
 export async function POST(req: Request): Promise<Response> {
@@ -18,7 +16,15 @@ export async function POST(req: Request): Promise<Response> {
     if (!parsed.success) {
         return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-    const ipfsUri = await pinJson(parsed.data, `request-${Date.now()}.json`);
-    const txHash = await residentPostRequest({ bountyMon: parsed.data.bountyMon, ipfsUri });
-    return NextResponse.json({ ok: true, txHash, ipfsUri });
+
+    // Use simulation engine — runs entire agent flow in-memory
+    const simReq = simulateRequest(parsed.data);
+
+    return NextResponse.json({
+        ok: true,
+        requestId: simReq.id,
+        txHash: `0xsim_${simReq.id.toString(16).padStart(8, "0")}`,
+        ipfsUri: simReq.ipfsUri,
+        message: "Request posted. Agent auction running (simulated). Watch the Tx Stream.",
+    });
 }

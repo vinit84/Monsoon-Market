@@ -1,18 +1,26 @@
-import { TierBadge } from "./tier-badge";
-import { getDemoTier, getDemoMode } from "@/config/tiers";
+import { ConnectWallet } from "./connect-wallet";
+import { UserMenu } from "./user-menu";
 
 export function Topbar() {
-    const tier = getDemoTier();
-    const mode = getDemoMode();
     return (
-        <header className="h-14 bg-[var(--color-surface)] border-b border-[var(--color-border-subdued)] flex items-center justify-between px-6">
+        <header className="sk-topbar">
             <div>
-                <div className="text-[14px] font-medium">Monsoon Mandi</div>
-                <div className="text-[12px] text-[color:var(--color-text-secondary)]">
-                    Autonomous agent marketplace · Mumbai monsoon emergency relief
-                </div>
+                <div className="sk-topbar-title">Mumbai Field Response · Live Mandi</div>
+                <div className="sk-topbar-sub">Autonomous agent marketplace · monsoon emergency relief</div>
             </div>
-            <TierBadge tier={tier} mode={mode} />
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 px-3 py-1.5 rounded border border-[color:var(--color-brass-dark)] bg-gradient-to-b from-[#fdf8ec] to-[var(--color-paper)] shadow-inner">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-ink-muted)]">
+                        <span className="sk-led sk-led-green sk-led-pulse" /> MVP
+                    </span>
+                    <span className="w-px h-4 bg-[color:var(--color-paper-shadow)]" />
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-ink-muted)]">
+                        <span className="sk-led sk-led-amber" /> Staged
+                    </span>
+                </div>
+                <ConnectWallet />
+                <UserMenu />
+            </div>
         </header>
     );
 }

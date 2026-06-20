@@ -1,0 +1,286 @@
+/**
+ * Simulation Engine — runs the entire Monsoon Mandi agent economy in-memory.
+ * No blockchain needed. Used when ESCROW_ADDRESS is not set or RPC is unreachable.
+ * Produces the same event shapes as the real on-chain flow for UI compatibility.
+ */
+
+export type SimState = "idle" | "open" | "awarded" | "fulfilled" | "disputed" | "failed";
+
+export interface SimRequest {
+    id: number;
+    category: string;
+    description: string;
+    location: string;
+    bountyMon: number;
+    requesterAddress: string;
+    ipfsUri: string;
+    state: SimState;
+    deadline: number; // timestamp ms
+    bids: SimBid[];
+    winner?: SimBid;
+    proofUri?: string;
+    verdict?: "accepted" | "rejected";
+    createdAt: number;
+}
+
+export interface SimBid {
+    agentLabel: string;
+    agentAddress: string;
+    priceMon: number;
+    etaSeconds: number;
+    completedTasks: number;
+    score: number;
+    txHash: string;
+}
+
+export interface SimEvent {
+    txHash: string;
+    blockNumber: number;
+    eventName: string;
+    actionLabel: string;
+    actor: string;
+    requestId: string;
+    explorerUrl: string;
+    observedAt: number;
+    details?: string;
+}
+
+type Listener = (e: SimEvent) => void;
+
+let _nextId = 0;
+let _blockNumber = 1;
+const _requests: SimRequest[] = [];
+const _events: SimEvent[] = [];
+const _listeners = new Set<Listener>();
+const _reputation: Record<string, number> = {};
+
+function fakeTxHash(): string {
+    return `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+}
+
+function emit(event: Omit<SimEvent, "observedAt">): SimEvent {
+    const e: SimEvent = { ...event, observedAt: Date.now() };
+    _events.push(e);
+    _listeners.forEach((l) => l(e));
+    _blockNumber++;
+    return e;
+}
+
+export function subscribe(l: Listener): () => void {
+    _listeners.add(l);
+    return () => _listeners.delete(l);
+}
+
+export function getRequests(): SimRequest[] {
+    return [..._requests];
+}
+
+export function getEvents(): SimEvent[] {
+    return [..._events];
+}
+
+export function getReputation(): Record<string, number> {
+    return { ..._reputation };
+}
+
+// --- Agent definitions ---
+const AGENTS = {
+    resident: { label: "Resident Relayer", address: "0xD761096e542a344429CeB1a68C52bDAB1dB9C78D" },
+    volunteerA: { label: "Volunteer Anil", address: "0xA111111111111111111111111111111111111111" },
+    volunteerB: { label: "Volunteer Bina", address: "0xB222222222222222222222222222222222222222" },
+    supply: { label: "Supply Agent", address: "0xC333333333333333333333333333333333333333" },
+    route: { label: "Route Agent", address: "0xD444444444444444444444444444444444444444" },
+    verifier: { label: "Verifier Agent", address: "0xE555555555555555555555555555555555555555" },
+};
+
+// Ensure initial reputation
+Object.values(AGENTS).forEach((a) => {
+    if (!_reputation[a.address]) _reputation[a.address] = 0;
+});
+
+/**
+ * Simulate the full agent flow for a new request.
+ * Returns immediately, but events are emitted asynchronously over ~15 seconds
+ * to mimic the real on-chain timing.
+ */
+export function simulateRequest(req: {
+    category: string;
+    description: string;
+    location: string;
+    bountyMon: number;
+    requesterAddress: string;
+}): SimRequest {
+    const id = ++_nextId;
+    const ipfsUri = `ipfs://bafymock${id.toString(16).padStart(8, "0")}/request-${id}.json`;
+    const now = Date.now();
+    const request: SimRequest = {
+        id,
+        ...req,
+        ipfsUri,
+        state: "open",
+        deadline: now + 10_000,
+        bids: [],
+        createdAt: now,
+    };
+    _requests.push(request);
+
+    // Emit RequestPosted
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "RequestPosted",
+        actionLabel: "postRequest",
+        actor: AGENTS.resident.address,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `Bounty: ${req.bountyMon} MON · Location: ${req.location}`,
+    });
+
+    // Schedule agent actions
+    scheduleAgentFlow(request);
+    return request;
+}
+
+async function scheduleAgentFlow(request: SimRequest) {
+    const { id } = request;
+
+    // 1. Supply Agent quotes (1s delay)
+    await delay(1000);
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "SupplyQuote",
+        actionLabel: "supplyQuote",
+        actor: AGENTS.supply.address,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: "Checked inventory: medicine available at Andheri Pharma Co-op",
+    });
+
+    // 2. Route Agent quotes (1.5s delay)
+    await delay(500);
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "RouteQuote",
+        actionLabel: "routeQuote (x402 paid)",
+        actor: AGENTS.route.address,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: "Route: Andheri W → Andheri E via Marol (avoiding Sion flood). ETA: 480s",
+    });
+
+    // 3. Volunteer A bids (2s delay)
+    await delay(500);
+    const bidA: SimBid = {
+        agentLabel: AGENTS.volunteerA.label,
+        agentAddress: AGENTS.volunteerA.address,
+        priceMon: Math.round((request.bountyMon * 0.7 + Math.random() * 0.01) * 1000) / 1000,
+        etaSeconds: 300 + Math.floor(Math.random() * 60),
+        completedTasks: _reputation[AGENTS.volunteerA.address] ?? 0,
+        score: 0,
+        txHash: fakeTxHash(),
+    };
+    bidA.score = bidA.priceMon / (1 + bidA.completedTasks);
+    request.bids.push(bidA);
+    emit({
+        txHash: bidA.txHash,
+        blockNumber: _blockNumber,
+        eventName: "BidSubmitted",
+        actionLabel: "submitBid",
+        actor: bidA.agentAddress,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `Price: ${bidA.priceMon} MON · ETA: ${bidA.etaSeconds}s · Stake: 0.01 MON`,
+    });
+
+    // 4. Volunteer B bids (3s delay)
+    await delay(1000);
+    const bidB: SimBid = {
+        agentLabel: AGENTS.volunteerB.label,
+        agentAddress: AGENTS.volunteerB.address,
+        priceMon: Math.round((request.bountyMon * 0.6 + Math.random() * 0.01) * 1000) / 1000,
+        etaSeconds: 400 + Math.floor(Math.random() * 60),
+        completedTasks: _reputation[AGENTS.volunteerB.address] ?? 0,
+        score: 0,
+        txHash: fakeTxHash(),
+    };
+    bidB.score = bidB.priceMon / (1 + bidB.completedTasks);
+    request.bids.push(bidB);
+    emit({
+        txHash: bidB.txHash,
+        blockNumber: _blockNumber,
+        eventName: "BidSubmitted",
+        actionLabel: "submitBid",
+        actor: bidB.agentAddress,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `Price: ${bidB.priceMon} MON · ETA: ${bidB.etaSeconds}s · Stake: 0.01 MON`,
+    });
+
+    // 5. Wait for auction deadline (5s more to total ~10s)
+    await delay(5000);
+
+    // Close auction — lowest score wins
+    const sorted = [...request.bids].sort((a, b) => a.score - b.score);
+    const winner = sorted[0];
+    request.winner = winner;
+    request.state = "awarded";
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "AuctionClosed",
+        actionLabel: "closeAuction",
+        actor: AGENTS.resident.address,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `Winner: ${winner.agentLabel} · Price: ${winner.priceMon} MON · Losing stake refunded`,
+    });
+
+    // 6. Winner submits proof (2s)
+    await delay(2000);
+    request.proofUri = `ipfs://bafymockproof${id}/delivery.jpg`;
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "ProofSubmitted",
+        actionLabel: "submitProof",
+        actor: winner.agentAddress,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: "Photo proof uploaded: delivery confirmed at location",
+    });
+
+    // 7. Verifier attests (2s — simulates Nugen vision call)
+    await delay(2000);
+    request.verdict = "accepted";
+    request.state = "fulfilled";
+    _reputation[winner.agentAddress] = (_reputation[winner.agentAddress] ?? 0) + 1;
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "AttestationAccepted",
+        actionLabel: "attestation ✓",
+        actor: AGENTS.verifier.address,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `Verdict: ACCEPTED (Nugen vision) · Bounty ${winner.priceMon} MON + stake released to ${winner.agentLabel} · Surplus ${(request.bountyMon - winner.priceMon).toFixed(4)} MON refunded`,
+    });
+
+    // 8. ERC-8004 reputation write (0.5s)
+    await delay(500);
+    emit({
+        txHash: fakeTxHash(),
+        blockNumber: _blockNumber,
+        eventName: "ReputationUpdated",
+        actionLabel: "reputation +1",
+        actor: winner.agentAddress,
+        requestId: String(id),
+        explorerUrl: `#tx-${_blockNumber}`,
+        details: `${winner.agentLabel} now has ${_reputation[winner.agentAddress]} completed tasks`,
+    });
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise((r) => setTimeout(r, ms));
+}

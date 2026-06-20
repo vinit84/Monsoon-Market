@@ -1,214 +1,661 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 /* ============================================================================
- * Monsoon Mandi design tokens (Shopify Polaris-inspired).
- * Source of truth: .kiro/steering/design-system.md
+ * MONSOON MANDI — Skeuomorphic Design System
  * ========================================================================== */
 
 :root {
-  /* Surfaces & background */
-  --color-background: #f6f6f7;
-  --color-surface: #ffffff;
+  /* Surfaces */
+  --color-paper: #f4ede0;
+  --color-paper-dark: #e8dec6;
+  --color-paper-shadow: #c9bfa6;
+  --color-leather: #2d1f12;
+  --color-leather-light: #4a3520;
+  --color-leather-edge: #1a1108;
 
-  /* Brand */
+  /* Ink (text) */
+  --color-ink: #2a2419;
+  --color-ink-muted: #6b5d48;
+  --color-ink-faded: #9a8b73;
+  --color-ink-light: #ffffff;
+
+  /* Brand — green leather/lacquer */
   --color-brand: #008060;
-  --color-brand-hover: #004c3f;
+  --color-brand-light: #1a9a76;
+  --color-brand-deep: #004c3f;
+  --color-brand-shadow: #002a22;
 
-  /* Text */
-  --color-text-primary: #202223;
-  --color-text-secondary: #6d7175;
-  --color-text-disabled: #8c9196;
+  /* Brass accents */
+  --color-brass: #b08a48;
+  --color-brass-light: #d4b078;
+  --color-brass-dark: #7a5e2e;
+  --color-brass-shadow: #4a3818;
 
-  /* Accent */
-  --color-link: #0070d9;
-
-  /* Borders */
-  --color-border: #c9ccCF;
-  --color-border-subdued: #e4e5e7;
-
-  /* Semantic / status */
-  --color-success: #008060;
-  --color-success-bg: #e3f1df;
-  --color-success-fg: #1a4d2e;
-  --color-warning: #ffc453;
+  /* Status lights */
+  --color-led-green: #2ecc71;
+  --color-led-amber: #f39c12;
+  --color-led-red: #e74c3c;
+  --color-led-blue: #3498db;
+  --color-critical: #c0392b;
+  --color-warning: #d4940f;
   --color-warning-bg: #fff5d9;
-  --color-warning-fg: #8a6d00;
-  --color-critical: #d72c0d;
-  --color-critical-bg: #ffebe9;
-  --color-critical-fg: #8e1b11;
-  --color-info-bg: #eaf4fb;
-  --color-info-fg: #0046a8;
-
-  /* Sidebar */
-  --color-sidebar-bg: #1a1a1a;
-  --color-sidebar-fg: #ffffff;
-
-  /* Shadows */
-  --shadow-raised: 0 1px 0 rgba(22, 29, 37, 0.05);
-  --shadow-overlay: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-@theme inline {
-  --color-background: var(--color-background);
-  --color-foreground: var(--color-text-primary);
-  --color-brand: var(--color-brand);
-  --color-brand-hover: var(--color-brand-hover);
-  --color-link: var(--color-link);
-  --color-text-secondary: var(--color-text-secondary);
-  --color-border: var(--color-border);
-  --color-border-subdued: var(--color-border-subdued);
-  --color-success: var(--color-success);
-  --color-warning: var(--color-warning);
-  --color-critical: var(--color-critical);
-  --color-sidebar-bg: var(--color-sidebar-bg);
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
-  --font-mono: Menlo, Monaco, "Courier New", monospace;
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", Menlo, Monaco, "Courier New", monospace;
+  --font-display: Georgia, "Times New Roman", serif;
 }
 
-* {
-  border-color: var(--color-border-subdued);
-}
+/* Force light mode */
+html { color-scheme: light; }
 
-html,
-body {
-  background: var(--color-background);
-  color: var(--color-text-primary);
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--color-paper);
+  background-image:
+    radial-gradient(ellipse at top left, rgba(255,255,255,0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(176,138,72,0.08) 0%, transparent 60%),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 2px,
+      rgba(0,0,0,0.008) 2px,
+      rgba(0,0,0,0.008) 4px
+    );
+  color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
-  letter-spacing: 0;
 }
 
-/* Headings follow design system hierarchy */
-h1 {
-  font-size: 28px;
+h1 { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -0.01em; color: var(--color-ink); }
+h2 { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: 0; color: var(--color-ink); }
+h3 { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--color-ink-muted); }
+
+code, .font-mono { font-family: var(--font-mono); font-size: 12.5px; }
+
+a { color: var(--color-brand-deep); text-decoration: underline; text-decoration-color: rgba(0,128,96,0.3); text-underline-offset: 2px; }
+a:hover { text-decoration-color: var(--color-brand); }
+
+::selection { background: var(--color-brass-light); color: var(--color-ink); }
+
+/* ============================================================================
+ * SIDEBAR — Dark leather panel with brass plate links
+ * ========================================================================== */
+
+.sk-sidebar {
+  background-color: var(--color-leather);
+  background-image:
+    linear-gradient(180deg, var(--color-leather-light) 0%, var(--color-leather) 35%, var(--color-leather-edge) 100%);
+  border-right: 4px solid var(--color-brass-dark);
+  box-shadow:
+    inset -2px 0 0 rgba(0,0,0,0.5),
+    inset 0 0 60px rgba(0,0,0,0.3),
+    4px 0 12px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.sk-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      rgba(0, 0, 0, 0.08) 3px,
+      rgba(0, 0, 0, 0.08) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sk-sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sk-sidebar-brand {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(176,138,72,0.3);
+  background: linear-gradient(180deg, rgba(176,138,72,0.08) 0%, transparent 100%);
+}
+
+.sk-sidebar-brand-title {
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-h2 {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-h3 {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
+  color: #f4ede0;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6), 0 -1px 0 rgba(255,255,255,0.1);
+  letter-spacing: 0.5px;
 }
 
-/* Code-typeface uses for tx hashes etc. */
-code,
-.font-mono {
+.sk-sidebar-brand-sub {
+  font-size: 11px;
+  color: var(--color-brass-light);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+.sk-sidebar-link {
+  display: block;
+  margin: 6px 12px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  color: rgba(244,237,224,0.7);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: all 120ms ease;
+  border: 1px solid transparent;
+}
+
+.sk-sidebar-link:hover {
+  background: rgba(176,138,72,0.12);
+  color: #f4ede0;
+}
+
+.sk-sidebar-link.active {
+  background:
+    linear-gradient(180deg, rgba(176,138,72,0.35) 0%, rgba(122,94,46,0.25) 100%);
+  border: 1px solid var(--color-brass-dark);
+  color: #fdf6e6;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -2px 4px rgba(0,0,0,0.3),
+    0 1px 0 rgba(255,255,255,0.05);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+}
+
+.sk-sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(176,138,72,0.2);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(244,237,224,0.4);
+}
+
+/* ============================================================================
+ * TOPBAR — brass-trimmed paper header
+ * ========================================================================== */
+
+.sk-topbar {
+  height: 64px;
+  background:
+    linear-gradient(180deg, #faf3e6 0%, var(--color-paper) 100%);
+  border-bottom: 3px solid var(--color-brass-dark);
+  box-shadow:
+    inset 0 -1px 0 var(--color-brass),
+    0 4px 8px -4px rgba(74,56,24,0.2);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sk-topbar-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-ink);
+  letter-spacing: 0.02em;
+}
+
+.sk-topbar-sub {
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ============================================================================
+ * CARDS — cream paper with embossed border
+ * ========================================================================== */
+
+.sk-card {
+  background:
+    linear-gradient(180deg, #fdf8ec 0%, var(--color-paper) 100%);
+  border: 1px solid var(--color-paper-shadow);
+  border-radius: 6px;
+  padding: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    inset 0 -1px 0 rgba(0,0,0,0.04),
+    0 1px 0 rgba(255,255,255,0.8),
+    0 2px 4px rgba(74,56,24,0.08),
+    0 8px 24px -8px rgba(74,56,24,0.15);
+  position: relative;
+}
+
+.sk-card::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(176,138,72,0.15);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.sk-card > * { position: relative; z-index: 1; }
+
+.sk-card-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.sk-card-desc {
+  font-size: 12.5px;
+  color: var(--color-ink-muted);
+  margin-top: 2px;
+}
+
+.sk-card-divider {
+  height: 1px;
+  margin: 16px -20px;
+  background: linear-gradient(90deg, transparent, var(--color-paper-shadow) 20%, var(--color-paper-shadow) 80%, transparent);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* ============================================================================
+ * BUTTONS — tactile pressable surfaces
+ * ========================================================================== */
+
+.sk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 60ms ease, box-shadow 60ms ease, filter 100ms ease;
+  position: relative;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  min-height: 40px;
+}
+
+.sk-btn:active { transform: translateY(1px); }
+.sk-btn:disabled { cursor: not-allowed; filter: grayscale(0.4) brightness(0.95); }
+
+/* Primary — green lacquer */
+.sk-btn-primary {
+  background:
+    linear-gradient(180deg, var(--color-brand-light) 0%, var(--color-brand) 50%, var(--color-brand-deep) 100%);
+  color: #ffffff;
+  border-color: var(--color-brand-shadow);
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 1px 0 rgba(255,255,255,0.6),
+    0 2px 4px rgba(0,42,34,0.4),
+    0 4px 8px rgba(0,42,34,0.2);
+}
+
+.sk-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.sk-btn-primary:active:not(:disabled) {
+  box-shadow:
+    inset 0 2px 4px rgba(0,42,34,0.4),
+    inset 0 1px 2px rgba(0,0,0,0.3),
+    0 1px 0 rgba(255,255,255,0.4);
+}
+
+/* Secondary — brass plate */
+.sk-btn-secondary {
+  background:
+    linear-gradient(180deg, #e0c089 0%, var(--color-brass) 50%, var(--color-brass-dark) 100%);
+  color: var(--color-ink);
+  border-color: var(--color-brass-shadow);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1px 0 rgba(0,0,0,0.15),
+    0 1px 0 rgba(255,255,255,0.6),
+    0 2px 4px rgba(74,56,24,0.3);
+}
+
+.sk-btn-secondary:hover:not(:disabled) { filter: brightness(1.03); }
+
+/* Destructive — red enamel */
+.sk-btn-destructive {
+  background:
+    linear-gradient(180deg, #d65440 0%, var(--color-critical) 50%, #8b2618 100%);
+  color: #ffffff;
+  border-color: #5c180e;
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 2px 4px rgba(92,24,14,0.4);
+}
+
+/* Plain — flat link with underline */
+.sk-btn-plain {
+  background: transparent;
+  color: var(--color-brand-deep);
+  border: none;
+  padding: 6px 8px;
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: 0;
+  min-height: auto;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(0,76,63,0.3);
+  box-shadow: none;
+}
+
+.sk-btn-plain:hover { text-decoration-color: var(--color-brand); }
+.sk-btn-plain:active { transform: none; }
+
+/* ============================================================================
+ * INPUTS — recessed paper field
+ * ========================================================================== */
+
+.sk-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background:
+    linear-gradient(180deg, #ede4d0 0%, var(--color-paper) 30%, var(--color-paper) 100%);
+  border: 1px solid var(--color-paper-shadow);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 2px 4px rgba(74,56,24,0.15),
+    inset 0 1px 2px rgba(0,0,0,0.08),
+    0 1px 0 rgba(255,255,255,0.6);
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.sk-input::placeholder { color: var(--color-ink-faded); }
+
+.sk-input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow:
+    inset 0 2px 4px rgba(74,56,24,0.15),
+    0 0 0 3px rgba(0,128,96,0.15),
+    0 1px 0 rgba(255,255,255,0.6);
+}
+
+textarea.sk-input { min-height: 88px; resize: vertical; }
+select.sk-input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-muted) 50%), linear-gradient(135deg, var(--color-ink-muted) 50%, transparent 50%); background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px; }
+
+/* ============================================================================
+ * BADGES — embossed pill labels
+ * ========================================================================== */
+
+.sk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 -1px 0 rgba(0,0,0,0.05),
+    0 1px 0 rgba(0,0,0,0.05);
+}
+
+.sk-badge-success { background: linear-gradient(180deg, #c8e6c0, #a3d099); color: #1a4d2e; border-color: #88b67c; }
+.sk-badge-warning { background: linear-gradient(180deg, #ffe6a8, #f5cf6e); color: #8a6d00; border-color: #d4a83f; }
+.sk-badge-critical { background: linear-gradient(180deg, #f7c4bc, #e89a8e); color: #8e1b11; border-color: #c25844; }
+.sk-badge-info     { background: linear-gradient(180deg, #c4def0, #95c0db); color: #0046a8; border-color: #5a93b8; }
+.sk-badge-brass    { background: linear-gradient(180deg, #e0c089, var(--color-brass)); color: #4a3818; border-color: var(--color-brass-dark); }
+
+/* ============================================================================
+ * LEDs — glowing status lights
+ * ========================================================================== */
+
+.sk-led {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.3);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.4),
+    inset 0 -1px 1px rgba(0,0,0,0.3);
+}
+
+.sk-led-green {
+  background: radial-gradient(circle at 30% 30%, #6fdc8f, var(--color-led-green) 60%, #1a8b4a);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.5),
+    inset 0 -1px 1px rgba(0,0,0,0.3),
+    0 0 8px rgba(46,204,113,0.6);
+}
+.sk-led-amber { background: radial-gradient(circle at 30% 30%, #ffce6a, var(--color-led-amber)); box-shadow: 0 0 8px rgba(243,156,18,0.6), inset 0 1px 1px rgba(255,255,255,0.5); }
+.sk-led-red   { background: radial-gradient(circle at 30% 30%, #ff7a6a, var(--color-led-red));   box-shadow: 0 0 8px rgba(231,76,60,0.6), inset 0 1px 1px rgba(255,255,255,0.5); }
+.sk-led-blue  { background: radial-gradient(circle at 30% 30%, #6db8e8, var(--color-led-blue));  box-shadow: 0 0 8px rgba(52,152,219,0.6), inset 0 1px 1px rgba(255,255,255,0.5); }
+
+@keyframes sk-led-pulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.55; }
+}
+.sk-led-pulse { animation: sk-led-pulse 1.4s ease-in-out infinite; }
+
+/* ============================================================================
+ * STATUS BANNER — gauge-style large status panel
+ * ========================================================================== */
+
+.sk-status-panel {
+  background:
+    linear-gradient(180deg, #fdf8ec 0%, var(--color-paper) 100%);
+  border: 2px solid var(--color-brass-dark);
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    inset 0 -2px 4px rgba(74,56,24,0.08),
+    0 2px 4px rgba(74,56,24,0.15),
+    0 6px 16px -4px rgba(74,56,24,0.2);
+  position: relative;
+}
+
+.sk-status-panel::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--color-brass);
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.sk-status-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-ink-muted);
+}
+
+.sk-status-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-top: 2px;
+  letter-spacing: 0.01em;
+}
+
+.sk-status-timer {
   font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-brand-deep);
+  background: rgba(0,0,0,0.04);
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================================
+ * TX STREAM — receipt printer rows
+ * ========================================================================== */
+
+.sk-tx-row {
+  border: 1px solid var(--color-paper-shadow);
+  border-radius: 4px;
+  padding: 10px 12px;
+  background:
+    linear-gradient(180deg, #fdf8ec 0%, var(--color-paper) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    0 1px 2px rgba(74,56,24,0.06);
+  transition: transform 80ms ease, box-shadow 120ms ease;
+}
+
+.sk-tx-row:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    0 2px 6px rgba(74,56,24,0.12);
+}
+
+/* ============================================================================
+ * DATA TABLES
+ * ========================================================================== */
+
+.sk-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
 }
 
-a {
-  color: var(--color-link);
-}
-
-/* Reusable utility classes that wrap the design tokens */
-.mm-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-subdued);
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: var(--shadow-raised);
-}
-
-.mm-button-primary {
-  background: var(--color-brand);
-  color: #ffffff;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: background 120ms ease;
-}
-.mm-button-primary:hover {
-  background: var(--color-brand-hover);
-}
-.mm-button-primary:disabled {
-  background: var(--color-text-disabled);
-  cursor: not-allowed;
-}
-
-.mm-button-secondary {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.mm-input {
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  background: var(--color-surface);
-  width: 100%;
-}
-.mm-input:focus {
-  outline: none;
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 2px rgba(0, 128, 96, 0.2);
-}
-
-.mm-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-
-.mm-badge-success {
-  background: var(--color-success-bg);
-  color: var(--color-success-fg);
-}
-.mm-badge-warning {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-fg);
-}
-.mm-badge-critical {
-  background: var(--color-critical-bg);
-  color: var(--color-critical-fg);
-}
-.mm-badge-info {
-  background: var(--color-info-bg);
-  color: var(--color-info-fg);
-}
-
-/* Data tables: no outer border, only row separators per design system */
-.mm-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-.mm-table thead th {
+.sk-table thead th {
   text-align: left;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
-  color: var(--color-text-secondary);
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border-subdued);
+  letter-spacing: 0.12em;
+  color: var(--color-ink-muted);
+  background:
+    linear-gradient(180deg, #fdf8ec, #ede4d0);
+  border-bottom: 2px solid var(--color-brass-dark);
+  border-top: 1px solid var(--color-paper-shadow);
 }
-.mm-table tbody td {
+
+.sk-table thead th:first-child { border-top-left-radius: 4px; }
+.sk-table thead th:last-child  { border-top-right-radius: 4px; }
+
+.sk-table tbody td {
   padding: 12px;
-  border-bottom: 1px solid var(--color-border-subdued);
+  border-bottom: 1px dashed var(--color-paper-shadow);
+  color: var(--color-ink);
+  background: rgba(255,255,255,0.3);
 }
-.mm-table tbody tr:hover td {
-  background: var(--color-background);
+
+.sk-table tbody tr:hover td { background: rgba(176,138,72,0.06); }
+
+.sk-table tbody tr:last-child td { border-bottom: none; }
+
+/* Brass rivets at corners of major panels */
+.sk-rivet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--color-brass-light), var(--color-brass) 60%, var(--color-brass-dark));
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.5),
+    inset 0 -1px 1px rgba(0,0,0,0.3),
+    0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* ============================================================================
+ * Map container — dark control screen
+ * ========================================================================== */
+
+.sk-map {
+  border: 4px solid var(--color-leather);
+  border-radius: 6px;
+  background: #0d1b2a;
+  box-shadow:
+    inset 0 0 30px rgba(0,0,0,0.6),
+    inset 0 2px 4px rgba(0,0,0,0.4),
+    0 2px 4px rgba(74,56,24,0.2),
+    0 8px 24px -8px rgba(74,56,24,0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Result blocks (success/warning/error) inside cards */
+.sk-result-success {
+  background: linear-gradient(180deg, #d4ebcc, #b5d6a8);
+  border: 1px solid #6e9c5e;
+  border-radius: 4px;
+  padding: 12px;
+  color: #1a4d2e;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(0,0,0,0.05);
+}
+
+.sk-result-error {
+  background: linear-gradient(180deg, #f5d6cf, #e8a99f);
+  border: 1px solid #b04a3a;
+  border-radius: 4px;
+  padding: 12px;
+  color: #8e1b11;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.sk-result-info {
+  background: linear-gradient(180deg, #d5e6f5, #afc8e0);
+  border: 1px solid #5a93b8;
+  border-radius: 4px;
+  padding: 12px;
+  color: #0046a8;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* Mono receipt text */
+.sk-receipt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-ink);
+  background:
+    linear-gradient(180deg, #fdf8ec, var(--color-paper));
+  padding: 10px 12px;
+  border-radius: 3px;
+  border: 1px dashed var(--color-paper-shadow);
+  box-shadow: inset 0 1px 2px rgba(74,56,24,0.05);
+  word-break: break-all;
+  line-height: 1.7;
 }
